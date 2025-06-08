@@ -1,34 +1,31 @@
 
 import React, { useState } from 'react';
-import { Search, Calendar, Clock, User, Mail, FileText, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Calendar, Clock, User, Mail, FileText, Edit2, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import EditBookingModal from './EditBookingModal';
-
-interface Booking {
-  id: string;
-  date: string;
-  time: string;
-  name: string;
-  email: string;
-  notes?: string;
-  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
-}
+import { useUpdateBooking, useDeleteBooking, type Booking } from '@/hooks/useBookings';
+import { useToast } from '@/hooks/use-toast';
+import { getStatusColor, getStatusText } from '@/lib/statusUtils';
 
 interface BookingsListProps {
   bookings: Booking[];
-  setBookings: React.Dispatch<React.SetStateAction<Booking[]>>;
+  isLoading?: boolean;
 }
 
-const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
+const BookingsList = ({ bookings, isLoading }: BookingsListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending' | 'completed' | 'cancelled'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  
+  const { toast } = useToast();
+  const updateBookingMutation = useUpdateBooking();
+  const deleteBookingMutation = useDeleteBooking();
 
   const filteredAndSortedBookings = bookings
     .filter(booking => {
@@ -54,17 +51,37 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
       }
     });
 
-  const updateBookingStatus = (id: string, status: 'confirmed' | 'pending' | 'completed' | 'cancelled') => {
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === id ? { ...booking, status } : booking
-      )
-    );
+  const updateBookingStatus = async (id: string, status: 'confirmed' | 'pending' | 'completed' | 'cancelled') => {
+    try {
+      await updateBookingMutation.mutateAsync({ id, updates: { status } });
+      toast({
+        title: "Sukces",
+        description: "Status rezerwacji został zaktualizowany",
+      });
+         } catch (error: any) {
+       toast({
+         title: "Błąd",
+         description: error?.message || "Nie udało się zaktualizować statusu",
+         variant: "destructive",
+       });
+     }
   };
 
-  const deleteBooking = (id: string) => {
+  const deleteBooking = async (id: string) => {
     if (confirm('Czy na pewno chcesz usunąć tę rezerwację?')) {
-      setBookings(prev => prev.filter(booking => booking.id !== id));
+      try {
+        await deleteBookingMutation.mutateAsync(id);
+        toast({
+          title: "Sukces",
+          description: "Rezerwacja została usunięta",
+        });
+             } catch (error: any) {
+         toast({
+           title: "Błąd",
+           description: error?.message || "Nie udało się usunąć rezerwacji",
+           variant: "destructive",
+         });
+       }
     }
   };
 
@@ -73,12 +90,30 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateBooking = (updatedBooking: Booking) => {
-    setBookings(prev =>
-      prev.map(booking =>
-        booking.id === updatedBooking.id ? updatedBooking : booking
-      )
-    );
+  const handleUpdateBooking = async (updatedBooking: Booking) => {
+    try {
+      await updateBookingMutation.mutateAsync({ 
+        id: updatedBooking.id, 
+        updates: {
+          name: updatedBooking.name,
+          email: updatedBooking.email,
+          notes: updatedBooking.notes,
+          date: updatedBooking.date,
+          time: updatedBooking.time,
+          status: updatedBooking.status
+        }
+      });
+      toast({
+        title: "Sukces",
+        description: "Rezerwacja została zaktualizowana",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error?.message || "Nie udało się zaktualizować rezerwacji",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -91,35 +126,7 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'Potwierdzona';
-      case 'pending':
-        return 'Oczekująca';
-      case 'completed':
-        return 'Zakończona';
-      case 'cancelled':
-        return 'Anulowana';
-      default:
-        return status;
-    }
-  };
 
   return (
     <div className="space-y-6">

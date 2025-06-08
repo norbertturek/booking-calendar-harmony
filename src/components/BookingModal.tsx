@@ -6,6 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { useCreateBooking } from '@/hooks/useBookings';
+import { useToast } from '@/hooks/use-toast';
+import { formatDateToString } from '@/lib/dateUtils';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -29,7 +32,9 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedTime, onSubmit }:
     notes: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { toast } = useToast();
+  const createBookingMutation = useCreateBooking();
 
   if (!isOpen) return null;
 
@@ -55,23 +60,41 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedTime, onSubmit }:
     
     if (!validateForm()) return;
     
-    setIsSubmitting(true);
-    
-    // Symulacja API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    onSubmit({
-      date: selectedDate!.toISOString().split('T')[0],
-      time: selectedTime,
-      name: formData.name,
-      email: formData.email,
-      notes: formData.notes,
-      status: 'pending'
-    });
-    
-    setFormData({ name: '', email: '', notes: '' });
-    setErrors({});
-    setIsSubmitting(false);
+    try {
+      const bookingDate = formatDateToString(selectedDate!);
+      console.log('📤 Sending booking with date:', bookingDate, 'for original date:', selectedDate);
+      
+      await createBookingMutation.mutateAsync({
+        date: bookingDate,
+        time: selectedTime,
+        name: formData.name,
+        email: formData.email,
+        notes: formData.notes,
+        status: 'pending'
+      });
+      
+      toast({
+        title: "Sukces!",
+        description: "Rezerwacja została utworzona",
+      });
+      
+      setFormData({ name: '', email: '', notes: '' });
+      setErrors({});
+      onSubmit({
+        date: bookingDate,
+        time: selectedTime,
+        name: formData.name,
+        email: formData.email,
+        notes: formData.notes,
+        status: 'pending'
+      });
+    } catch (error: any) {
+      toast({
+        title: "Błąd",
+        description: error?.message || "Nie udało się utworzyć rezerwacji",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -186,16 +209,16 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedTime, onSubmit }:
               variant="outline"
               onClick={onClose}
               className="flex-1"
-              disabled={isSubmitting}
+              disabled={createBookingMutation.isPending}
             >
               Anuluj
             </Button>
             <Button
               type="submit"
               className="flex-1"
-              disabled={isSubmitting}
+              disabled={createBookingMutation.isPending}
             >
-              {isSubmitting ? 'Zapisywanie...' : 'Zarezerwuj'}
+              {createBookingMutation.isPending ? 'Zapisywanie...' : 'Zarezerwuj'}
             </Button>
           </div>
         </form>

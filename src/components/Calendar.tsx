@@ -5,45 +5,37 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import BookingModal from './BookingModal';
 import BookingsList from './BookingsList';
-
-interface Booking {
-  id: string;
-  date: string;
-  time: string;
-  name: string;
-  email: string;
-  notes?: string;
-  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
-}
+import { useBookings, useAvailableSlots, type Booking } from '@/hooks/useBookings';
+import { useToast } from '@/hooks/use-toast';
+import { formatDateToString } from '@/lib/dateUtils';
+import { getStatusColor, getStatusText } from '@/lib/statusUtils';
 
 type ViewMode = 'month' | 'week' | 'day';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null); 
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isAdminView, setIsAdminView] = useState(false);
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      date: '2025-06-10',
-      time: '10:00',
-      name: 'Jan Kowalski',
-      email: 'jan.kowalski@email.com',
-      notes: 'Konsultacja biznesowa',
-      status: 'confirmed'
-    },
-    {
-      id: '2',
-      date: '2025-06-12',
-      time: '14:30',
-      name: 'Anna Nowak',
-      email: 'anna.nowak@email.com',
-      status: 'pending'
-    }
-  ]);
+  const { toast } = useToast();
+
+  // Hook do pobierania rezerwacji z Supabase
+  const { data: bookings = [], isLoading, error } = useBookings();
+  
+  // Hook do sprawdzania dostępności dla wybranej daty
+  const selectedDateStr = selectedDate ? formatDateToString(selectedDate) : '';
+  const { data: availableSlots = [] } = useAvailableSlots(selectedDateStr);
+
+  // Obsługa błędów
+  if (error) {
+    toast({
+      title: "Błąd",
+      description: "Nie udało się pobrać rezerwacji",
+      variant: "destructive",
+    });
+  }
 
   const months = [
     'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
@@ -55,7 +47,7 @@ const Calendar = () => {
     '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
     '15:00', '15:30', '16:00', '16:30', '17:00'
   ];
-
+  
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -89,11 +81,26 @@ const Calendar = () => {
     return days;
   };
 
-  const isDateBooked = (date: Date, time?: string) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return bookings.some(booking => 
-      booking.date === dateStr && (!time || booking.time === time) && booking.status !== 'cancelled'
+  // Helper function to normalize time format for comparison
+  const normalizeTime = (time: string) => {
+    // Convert "HH:MM:SS" to "HH:MM" or keep "HH:MM" as is
+    return time.split(':').slice(0, 2).join(':');
+  };
+
+  // Helper function to find booking for specific date and time
+  const findBookingForSlot = (date: Date, time?: string) => {
+    const dateStr = formatDateToString(date);
+    return bookings.find(booking => 
+      booking.date === dateStr && 
+      (!time || normalizeTime(booking.time) === normalizeTime(time)) && 
+      booking.status !== 'cancelled'
     );
+  };
+
+
+
+  const isDateBooked = (date: Date, time?: string) => {
+    return !!findBookingForSlot(date, time);
   };
 
   const isTimeSlotAvailable = (date: Date, time: string) => {
@@ -113,12 +120,8 @@ const Calendar = () => {
     }
   };
 
-  const handleBookingSubmit = (bookingData: Omit<Booking, 'id'>) => {
-    const newBooking: Booking = {
-      ...bookingData,
-      id: Date.now().toString(),
-    };
-    setBookings(prev => [...prev, newBooking]);
+  const handleBookingSubmit = (bookingData: { date: string; time: string; name: string; email: string; notes?: string; status: 'pending' }) => {
+    // Booking creation will be handled by BookingModal component using useCreateBooking hook
     setIsBookingModalOpen(false);
     setSelectedDate(null);
     setSelectedTime('');
@@ -171,7 +174,7 @@ const Calendar = () => {
               {hasBookings && (
                 <div className="mt-1">
                   <Badge variant="secondary" className="text-xs">
-                    {bookings.filter(b => b.date === day.toISOString().split('T')[0] && b.status !== 'cancelled').length} wizyt
+                    {bookings.filter(b => b.date === formatDateToString(day) && b.status !== 'cancelled').length} wizyt
                   </Badge>
                 </div>
               )}
@@ -185,6 +188,8 @@ const Calendar = () => {
   const renderWeekView = () => {
     const days = getWeekDays(currentDate);
     const weekDays = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+    
+
 
     return (
       <div className="grid grid-cols-8 gap-1">
@@ -204,11 +209,12 @@ const Calendar = () => {
             {days.map((day, dayIndex) => {
               const isAvailable = isTimeSlotAvailable(day, time);
               const isBooked = isDateBooked(day, time);
+              const booking = findBookingForSlot(day, time);
               
               return (
                 <div
                   key={`${time}-${dayIndex}`}
-                  className={`p-2 h-12 border border-border/50 transition-all cursor-pointer ${
+                  className={`p-2 h-12 border border-border/50 transition-all cursor-pointer relative ${
                     isBooked 
                       ? 'bg-destructive/20 cursor-not-allowed' 
                       : isAvailable 
@@ -216,9 +222,17 @@ const Calendar = () => {
                         : 'bg-muted/50 cursor-not-allowed'
                   }`}
                   onClick={() => handleTimeSlotClick(day, time)}
+                  title={booking ? `${booking.name} - ${booking.email}\nStatus: ${getStatusText(booking.status)}${booking.notes ? '\nUwagi: ' + booking.notes : ''}` : ''}
                 >
-                  {isBooked && (
-                    <Badge variant="destructive" className="text-xs">Zajęte</Badge>
+                  {isBooked && booking && (
+                    <div className="flex flex-col items-center justify-center h-full p-1 gap-1">
+                      <Badge className={`text-xs px-1 py-0.5 ${getStatusColor(booking.status)}`}>
+                        {getStatusText(booking.status)}
+                      </Badge>
+                      <div className="text-xs text-center font-medium truncate w-full leading-tight">
+                        {booking.name.split(' ')[0]}
+                      </div>
+                    </div>
                   )}
                 </div>
               );
@@ -249,9 +263,7 @@ const Calendar = () => {
           {timeSlots.map(time => {
             const isAvailable = isTimeSlotAvailable(displayDate, time);
             const isBooked = isDateBooked(displayDate, time);
-            const booking = bookings.find(b => 
-              b.date === displayDate.toISOString().split('T')[0] && b.time === time && b.status !== 'cancelled'
-            );
+            const booking = findBookingForSlot(displayDate, time);
             
             return (
               <div
@@ -273,7 +285,9 @@ const Calendar = () => {
                   
                   {isBooked && booking ? (
                     <div className="flex items-center gap-2">
-                      <Badge variant="destructive">Zajęte</Badge>
+                      <Badge className={getStatusColor(booking.status)}>
+                        {getStatusText(booking.status)}
+                      </Badge>
                       <span className="text-sm text-muted-foreground">
                         {booking.name}
                       </span>
@@ -328,7 +342,7 @@ const Calendar = () => {
       </Card>
 
       {isAdminView ? (
-        <BookingsList bookings={bookings} setBookings={setBookings} />
+        <BookingsList bookings={bookings} isLoading={isLoading} />
       ) : (
         <>
           {/* Navigation and View Controls */}
@@ -382,9 +396,18 @@ const Calendar = () => {
           {/* Calendar */}
           <Card className="p-6">
             <div className="overflow-x-auto">
-              {viewMode === 'month' && renderMonthView()}
-              {viewMode === 'week' && renderWeekView()}
-              {viewMode === 'day' && renderDayView()}
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  <span className="ml-2">Ładowanie rezerwacji...</span>
+                </div>
+              ) : (
+                <>
+                  {viewMode === 'month' && renderMonthView()}
+                  {viewMode === 'week' && renderWeekView()}
+                  {viewMode === 'day' && renderDayView()}
+                </>
+              )}
             </div>
           </Card>
 

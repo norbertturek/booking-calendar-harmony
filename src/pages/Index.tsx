@@ -4,6 +4,7 @@ import AuthGuard from "@/components/AuthGuard";
 import UserMenu from "@/components/UserMenu";
 
 const Index = () => {
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-background">

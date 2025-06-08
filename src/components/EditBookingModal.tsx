@@ -21,7 +21,7 @@ interface EditBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   booking: Booking | null;
-  onSubmit: (updatedBooking: Booking) => void;
+  onSubmit: (updatedBooking: Booking) => Promise<void>;
 }
 
 const timeSlots = [
@@ -42,6 +42,11 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Helper function to normalize time format
+  const normalizeTime = (time: string) => {
+    return time.split(':').slice(0, 2).join(':');
+  };
+
   useEffect(() => {
     if (booking && isOpen) {
       setFormData({
@@ -49,7 +54,7 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
         email: booking.email,
         notes: booking.notes || '',
         date: booking.date,
-        time: booking.time,
+        time: normalizeTime(booking.time), // Normalize time format
         status: booking.status
       });
     }
@@ -89,9 +94,6 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
     
     setIsSubmitting(true);
     
-    // Symulacja API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
     const updatedBooking: Booking = {
       ...booking,
       name: formData.name,
@@ -102,11 +104,15 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
       status: formData.status
     };
     
-    onSubmit(updatedBooking);
-    
-    setErrors({});
-    setIsSubmitting(false);
-    onClose();
+    try {
+      await onSubmit(updatedBooking);
+      setErrors({});
+      setIsSubmitting(false);
+      onClose();
+    } catch (error) {
+      console.error('Failed to update booking:', error);
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
