@@ -131,7 +131,9 @@ const Auth = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={8}
+                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$"
+                title="Hasło musi mieć minimum 8 znaków, zawierać wielką literę, małą literę i cyfrę"
               />
             </div>
             

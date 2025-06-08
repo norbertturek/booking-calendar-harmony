@@ -62,7 +62,10 @@ const BookingModal = ({ isOpen, onClose, selectedDate, selectedTime, onSubmit }:
     
     try {
       const bookingDate = formatDateToString(selectedDate!);
+      // Debug tylko w development
+    if (import.meta.env.DEV) {
       console.log('📤 Sending booking with date:', bookingDate, 'for original date:', selectedDate);
+    }
       
       await createBookingMutation.mutateAsync({
         date: bookingDate,

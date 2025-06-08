@@ -55,15 +55,18 @@ export const formatDateToPolish = (date: Date | string): string => {
  * @param date - Date object
  */
 export const debugDateFormats = (date: Date) => {
-  console.group('🗓️ Date Debug:');
-  console.log('Original date:', date);
-  console.log('getFullYear():', date.getFullYear());
-  console.log('getMonth():', date.getMonth(), '(0-indexed)');
-  console.log('getDate():', date.getDate());
-  console.log('toString():', date.toString());
-  console.log('toDateString():', date.toDateString());
-  console.log('toISOString():', date.toISOString());
-  console.log('toISOString().split("T")[0]:', date.toISOString().split('T')[0]);
-  console.log('formatDateToString():', formatDateToString(date));
-  console.groupEnd();
+  // Tylko w development mode
+  if (import.meta.env.DEV) {
+    console.group('🗓️ Date Debug:');
+    console.log('Original date:', date);
+    console.log('getFullYear():', date.getFullYear());
+    console.log('getMonth():', date.getMonth(), '(0-indexed)');
+    console.log('getDate():', date.getDate());
+    console.log('toString():', date.toString());
+    console.log('toDateString():', date.toDateString());
+    console.log('toISOString():', date.toISOString());
+    console.log('toISOString().split("T")[0]:', date.toISOString().split('T')[0]);
+    console.log('formatDateToString():', formatDateToString(date));
+    console.groupEnd();
+  }
 }; 

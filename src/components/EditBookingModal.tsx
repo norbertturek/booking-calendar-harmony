@@ -110,7 +110,10 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
       setIsSubmitting(false);
       onClose();
     } catch (error) {
-      console.error('Failed to update booking:', error);
+      // Log error tylko w development
+      if (import.meta.env.DEV) {
+        console.error('Failed to update booking:', error);
+      }
       setIsSubmitting(false);
     }
   };
