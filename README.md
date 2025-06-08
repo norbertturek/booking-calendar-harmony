@@ -1,73 +1,149 @@
-# Welcome to your Lovable project
+# System Rezerwacji - Booking Calendar Harmony
 
-## Project info
+Aplikacja do zarządzania rezerwacjami z intuicyjnym interfejsem kalendarza.
 
-**URL**: https://lovable.dev/projects/55c36df3-fd51-4464-bcc9-6e8ca8414f2f
+## 🚀 Funkcjonalności
 
-## How can I edit this code?
+- **Kalendarz rezerwacji** - widoki miesięczny, tygodniowy i dzienny
+- **Zarządzanie rezerwacjami** - tworzenie, edycja, usuwanie i filtrowanie
+- **System statusów** - oczekująca, potwierdzona, zakończona, anulowana
+- **Responsywny design** - działa na wszystkich urządzeniach
+- **Autentykacja** - bezpieczne logowanie przez Supabase Auth
+- **Real-time updates** - automatyczne odświeżanie danych
 
-There are several ways of editing your application.
+## 🛠️ Technologie
 
-**Use Lovable**
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (PostgreSQL + Auth + Real-time)
+- **State Management**: TanStack Query (React Query)
+- **Date Handling**: date-fns
+- **Icons**: Lucide React
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/55c36df3-fd51-4464-bcc9-6e8ca8414f2f) and start prompting.
+## 📦 Instalacja
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+# Sklonuj repozytorium
+git clone https://github.com/norbertturek/booking-calendar-harmony.git
 
-**Use your preferred IDE**
+# Przejdź do katalogu projektu
+cd booking-calendar-harmony
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Zainstaluj zależności
+yarn install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Uruchom serwer deweloperski
+yarn dev
 ```
 
-**Edit a file directly in GitHub**
+## ⚙️ Konfiguracja
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Utwórz projekt w [Supabase](https://supabase.com)
+2. Skopiuj zmienne środowiskowe:
 
-**Use GitHub Codespaces**
+```bash
+cp .env.example .env.local
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. Uzupełnij plik `.env.local`:
 
-## What technologies are used for this project?
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-This project is built with:
+4. Uruchom migracje bazy danych w Supabase SQL Editor
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🗄️ Struktura bazy danych
 
-## How can I deploy this project?
+- `bookings` - główna tabela rezerwacji
+- `time_slots` - dostępne sloty czasowe
+- `business_hours` - godziny pracy
+- `blocked_dates` - zablokowane daty
 
-Simply open [Lovable](https://lovable.dev/projects/55c36df3-fd51-4464-bcc9-6e8ca8414f2f) and click on Share -> Publish.
+## 🎨 Komponenty
 
-## Can I connect a custom domain to my Lovable project?
+- `Calendar` - główny komponent kalendarza z trzema widokami
+- `BookingsList` - lista i zarządzanie rezerwacjami
+- `BookingModal` - formularz nowej rezerwacji
+- `EditBookingModal` - edycja istniejących rezerwacji
+- `AuthGuard` - ochrona tras wymagających logowania
 
-Yes, you can!
+## 📱 Widoki
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Kalendarz miesięczny
+- Przegląd całego miesiąca
+- Kolorowe wskaźniki statusów rezerwacji
+- Szybki podgląd liczby rezerwacji na dzień
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Kalendarz tygodniowy
+- Szczegółowy widok tygodnia
+- Sloty godzinowe z rezerwacjami
+- Łatwe dodawanie nowych rezerwacji
+
+### Kalendarz dzienny
+- Fokus na jeden dzień
+- Wszystkie szczegóły rezerwacji
+- Optymalne dla urządzeń mobilnych
+
+## 🔧 Skrypty
+
+```bash
+# Rozwój
+yarn dev
+
+# Build produkcyjny
+yarn build
+
+# Podgląd buildu
+yarn preview
+
+# Linting
+yarn lint
+
+# Type checking
+yarn type-check
+```
+
+## 🚀 Deployment
+
+Aplikacja jest gotowa do wdrożenia na:
+
+- **Vercel** (zalecane)
+- **Netlify** 
+- **Railway**
+- **Render**
+
+### Vercel Deployment
+
+```bash
+# Zainstaluj Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
+
+## 🤝 Rozwój
+
+1. Fork repozytorium
+2. Utwórz branch dla nowej funkcjonalności (`git checkout -b feature/amazing-feature`)
+3. Commit zmian (`git commit -m 'Add amazing feature'`)
+4. Push do brancha (`git push origin feature/amazing-feature`)
+5. Otwórz Pull Request
+
+## 📄 Licencja
+
+Ten projekt jest licencjonowany na licencji MIT - zobacz plik [LICENSE](LICENSE) dla szczegółów.
+
+## 👨‍💻 Autor
+
+**Norbert Turek**
+- GitHub: [@norbertturek](https://github.com/norbertturek)
+
+## 🙏 Podziękowania
+
+- [Supabase](https://supabase.com) za backend-as-a-service
+- [shadcn/ui](https://ui.shadcn.com) za komponenty UI
+- [Tailwind CSS](https://tailwindcss.com) za styling
+- [Lucide](https://lucide.dev) za ikony
