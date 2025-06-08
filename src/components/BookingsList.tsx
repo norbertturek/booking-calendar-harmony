@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Calendar, Clock, User, Mail, FileText, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import EditBookingModal from './EditBookingModal';
 
 interface Booking {
   id: string;
@@ -26,6 +26,8 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   const filteredAndSortedBookings = bookings
     .filter(booking => {
@@ -63,6 +65,19 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
     if (confirm('Czy na pewno chcesz usunąć tę rezerwację?')) {
       setBookings(prev => prev.filter(booking => booking.id !== id));
     }
+  };
+
+  const handleEditBooking = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateBooking = (updatedBooking: Booking) => {
+    setBookings(prev =>
+      prev.map(booking =>
+        booking.id === updatedBooking.id ? updatedBooking : booking
+      )
+    );
   };
 
   const formatDate = (dateStr: string) => {
@@ -240,6 +255,7 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
                   <Button
                     size="sm"
                     variant="outline"
+                    onClick={() => handleEditBooking(booking)}
                     className="flex items-center gap-1"
                   >
                     <Edit2 className="h-4 w-4" />
@@ -261,6 +277,17 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
           ))
         )}
       </div>
+
+      {/* Edit Modal */}
+      <EditBookingModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        onSubmit={handleUpdateBooking}
+      />
     </div>
   );
 };
