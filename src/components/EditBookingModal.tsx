@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, User, Mail, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ interface Booking {
   name: string;
   email: string;
   notes?: string;
-  status: 'confirmed' | 'pending';
+  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
 }
 
 interface EditBookingModalProps {
@@ -38,7 +37,7 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
     notes: '',
     date: '',
     time: '',
-    status: 'pending' as 'confirmed' | 'pending'
+    status: 'pending' as 'confirmed' | 'pending' | 'completed' | 'cancelled'
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -230,13 +229,15 @@ const EditBookingModal = ({ isOpen, onClose, booking, onSubmit }: EditBookingMod
           {/* Status Field */}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value as 'confirmed' | 'pending')}>
+            <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value as 'confirmed' | 'pending' | 'completed' | 'cancelled')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">Oczekująca</SelectItem>
                 <SelectItem value="confirmed">Potwierdzona</SelectItem>
+                <SelectItem value="completed">Zakończona</SelectItem>
+                <SelectItem value="cancelled">Anulowana</SelectItem>
               </SelectContent>
             </Select>
           </div>

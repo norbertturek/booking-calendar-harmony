@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Calendar, Clock, User, Mail, FileText, Edit2, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ interface Booking {
   name: string;
   email: string;
   notes?: string;
-  status: 'confirmed' | 'pending';
+  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
 }
 
 interface BookingsListProps {
@@ -24,7 +25,7 @@ interface BookingsListProps {
 
 const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'confirmed' | 'pending' | 'completed' | 'cancelled'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -53,7 +54,7 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
       }
     });
 
-  const updateBookingStatus = (id: string, status: 'confirmed' | 'pending') => {
+  const updateBookingStatus = (id: string, status: 'confirmed' | 'pending' | 'completed' | 'cancelled') => {
     setBookings(prev => 
       prev.map(booking => 
         booking.id === id ? { ...booking, status } : booking
@@ -96,6 +97,10 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
         return 'bg-green-100 text-green-800 border-green-200';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -107,6 +112,10 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
         return 'Potwierdzona';
       case 'pending':
         return 'Oczekująca';
+      case 'completed':
+        return 'Zakończona';
+      case 'cancelled':
+        return 'Anulowana';
       default:
         return status;
     }
@@ -116,10 +125,10 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
     <div className="space-y-6">
       {/* Header with Statistics */}
       <Card className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-foreground">{bookings.length}</div>
-            <div className="text-sm text-muted-foreground">Wszystkie rezerwacje</div>
+            <div className="text-sm text-muted-foreground">Wszystkie</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
@@ -132,6 +141,18 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
               {bookings.filter(b => b.status === 'pending').length}
             </div>
             <div className="text-sm text-muted-foreground">Oczekujące</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {bookings.filter(b => b.status === 'completed').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Zakończone</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-red-600">
+              {bookings.filter(b => b.status === 'cancelled').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Anulowane</div>
           </div>
         </div>
       </Card>
@@ -160,6 +181,8 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
                 <SelectItem value="all">Wszystkie</SelectItem>
                 <SelectItem value="confirmed">Potwierdzone</SelectItem>
                 <SelectItem value="pending">Oczekujące</SelectItem>
+                <SelectItem value="completed">Zakończone</SelectItem>
+                <SelectItem value="cancelled">Anulowane</SelectItem>
               </SelectContent>
             </Select>
             
@@ -241,15 +264,26 @@ const BookingsList = ({ bookings, setBookings }: BookingsListProps) => {
                   )}
                   
                   {booking.status === 'confirmed' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateBookingStatus(booking.id, 'pending')}
-                      className="flex items-center gap-1"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Cofnij
-                    </Button>
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateBookingStatus(booking.id, 'completed')}
+                        className="flex items-center gap-1"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Zakończ
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => updateBookingStatus(booking.id, 'cancelled')}
+                        className="flex items-center gap-1"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Anuluj
+                      </Button>
+                    </>
                   )}
                   
                   <Button

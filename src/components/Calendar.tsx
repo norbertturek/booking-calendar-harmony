@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Users, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +13,7 @@ interface Booking {
   name: string;
   email: string;
   notes?: string;
-  status: 'confirmed' | 'pending';
+  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
 }
 
 type ViewMode = 'month' | 'week' | 'day';
@@ -93,7 +92,7 @@ const Calendar = () => {
   const isDateBooked = (date: Date, time?: string) => {
     const dateStr = date.toISOString().split('T')[0];
     return bookings.some(booking => 
-      booking.date === dateStr && (!time || booking.time === time)
+      booking.date === dateStr && (!time || booking.time === time) && booking.status !== 'cancelled'
     );
   };
 
@@ -172,7 +171,7 @@ const Calendar = () => {
               {hasBookings && (
                 <div className="mt-1">
                   <Badge variant="secondary" className="text-xs">
-                    {bookings.filter(b => b.date === day.toISOString().split('T')[0]).length} wizyt
+                    {bookings.filter(b => b.date === day.toISOString().split('T')[0] && b.status !== 'cancelled').length} wizyt
                   </Badge>
                 </div>
               )}
@@ -251,7 +250,7 @@ const Calendar = () => {
             const isAvailable = isTimeSlotAvailable(displayDate, time);
             const isBooked = isDateBooked(displayDate, time);
             const booking = bookings.find(b => 
-              b.date === displayDate.toISOString().split('T')[0] && b.time === time
+              b.date === displayDate.toISOString().split('T')[0] && b.time === time && b.status !== 'cancelled'
             );
             
             return (
